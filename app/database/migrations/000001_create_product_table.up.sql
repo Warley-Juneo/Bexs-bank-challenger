@@ -1,0 +1,6 @@
+CREATE TABLE partner (
+  id SERIAL PRIMARY KEY NOW NULL,
+  trading_name VARCHAR(255) NOT NULL,
+  document VARCHAR(18) NOT NULL,
+  currency VARCHAR(3) NOT NULL,
+)

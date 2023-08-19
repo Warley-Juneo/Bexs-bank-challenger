@@ -1,0 +1,8 @@
+{
+  "database": {
+    "url": "://postgres:123@localhost:5432/bexs_account"
+  },
+  "server": {
+    "port": "3000"
+  }
+}
