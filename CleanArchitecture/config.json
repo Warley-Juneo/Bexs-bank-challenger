@@ -1,8 +1,0 @@
-{
-    "database": {
-      "url": "://wjuneo:admin@localhost:5432/postgres"
-    },
-    "server": {
-      "port": "3001"
-    }
-}
