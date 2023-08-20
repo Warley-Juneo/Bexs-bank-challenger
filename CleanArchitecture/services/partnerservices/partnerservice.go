@@ -11,7 +11,8 @@ import (
 )
 
 type PartnerService interface {
-	SavePartners(w http.ResponseWriter, r *http.Request)
+	HandlerRequest(w http.ResponseWriter, r *http.Request)
+	SavePartners(partnerData partnerdto.PartnerData) (*entity.Partner, error)
 }
 
 type partnerService struct {
@@ -24,28 +25,36 @@ func NewPartnerService(partnerRepository partnerrepository.PartnerRepository) Pa
 	}
 }
 
-func (ps partnerService) SavePartners(w http.ResponseWriter, r *http.Request) {
+func (ps *partnerService) SavePartners(partnerData partnerdto.PartnerData) (*entity.Partner, error) {
+    entity := entity.Partner{
+        Trading_name: partnerData.TradingName,
+        Document:     partnerData.Document,
+        Currency:     partnerData.Currency,
+    }
 
-	var partnerdto partnerdto.PartnerData
-	if err := json.NewDecoder(r.Body).Decode(&partnerdto); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+    ctx := context.Background()
+    newEntity, err := ps.partnerRepository.SavePartners(ctx, entity)
+    if err != nil {
+        return	nil, err
+    }
 
-	entity := entity.Partner{
-		Trading_name: partnerdto.TradingName,
-		Document:     partnerdto.Document,
-		Currency:     partnerdto.Currency,
-	}
+    return newEntity, nil
+}
 
-	ctx := context.Background()
-	_, err := ps.partnerRepository.SavePartners(ctx, entity)
 
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+func (ps *partnerService) HandlerRequest(w http.ResponseWriter, r *http.Request) {
+    var partnerData partnerdto.PartnerData
+    if err := json.NewDecoder(r.Body).Decode(&partnerData); err != nil {
+        http.Error(w, err.Error(), http.StatusBadRequest)
+        return
+    }
 
-	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("Partner created successfully"))
+    _, err := ps.SavePartners(partnerData)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+
+    w.WriteHeader(http.StatusCreated)
+    w.Write([]byte("Partner created successfully"))
 }
