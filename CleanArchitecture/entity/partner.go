@@ -15,7 +15,6 @@ type Partner struct {
 }
 
 func (partner *Partner) Validate() error {
-	// função para consultar o documento no banco de dados e verificar se já existe
 	list_cucurrency_valid := []string{"USD", "EUR", "GBP"}
 
 	for _, currency := range list_cucurrency_valid {
