@@ -39,6 +39,8 @@ func (ps *paymentService) HandlerRequest(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	paymentData.Amount = float64(int(paymentData.Amount*100)) / 100
+
 	payment, err := ps.SavePayments(paymentData)
 	if err != nil {
 		if err.Error() == "partner not found" {
