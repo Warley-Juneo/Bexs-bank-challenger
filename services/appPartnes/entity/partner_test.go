@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/wjuneo/bexs/entity"
-	//"github.com/go-faker/faker/v4"
 
 	"github.com/stretchr/testify/require"
 )
