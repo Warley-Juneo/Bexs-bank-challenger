@@ -3,9 +3,8 @@ package partnerrepository
 import (
 	"context"
 
-	"github.com/wjuneo/bexs/postgres"
 	"github.com/wjuneo/bexs/entity"
-	"github.com/jackc/pgx/v4"
+	"github.com/wjuneo/bexs/postgres"
 )
 
 type PartnerRepository interface {
@@ -47,25 +46,21 @@ func (repo *partnerRepository) SavePartners(ctx context.Context, partner entity.
 }
 
 func (repo *partnerRepository) FindPartnerByDocument(ctx context.Context, document string) (*entity.Partner, error) {
-    var partner entity.Partner
+	var partner entity.Partner
 
-    err := repo.db.QueryRow(
-        ctx,
-        "SELECT * FROM partner WHERE document = $1",
-        document,
-    ).Scan(
+	err := repo.db.QueryRow(
+		ctx,
+		"SELECT * FROM partner WHERE document = $1",
+		document,
+	).Scan(
 		&partner.ID,
 		&partner.Trading_name,
-        &partner.Document,
+		&partner.Document,
 		&partner.Currency,
-    )
+	)
 
-    if err != nil {
-        if err == pgx.ErrNoRows {
-            return nil, nil
-        }
-        return nil, err
-    }
-
-    return &partner, nil
+	if err != nil {
+		return nil, nil
+	}
+	return &partner, nil
 }

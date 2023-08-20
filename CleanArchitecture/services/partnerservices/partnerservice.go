@@ -8,6 +8,7 @@ import (
 
 	"github.com/wjuneo/bexs/dto/partnerdto"
 	"github.com/wjuneo/bexs/entity"
+	"github.com/wjuneo/bexs/logs"
 	"github.com/wjuneo/bexs/repository/partnerrepository"
 )
 
@@ -27,10 +28,10 @@ func NewPartnerService(partnerRepository partnerrepository.PartnerRepository) Pa
 }
 
 func (ps *partnerService) ValidatePartners(partnerData partnerdto.PartnerData) error {
-
-	_, err := ps.partnerRepository.FindPartnerByDocument(context.Background(), partnerData.Document)
-	if err != nil {
-		return err
+	partner, _ := ps.partnerRepository.FindPartnerByDocument(context.Background(), partnerData.Document)
+	if partner != nil {
+		logs.LogToFile("logs/error.log", "a partner with that document already exists")
+		return fmt.Errorf("a partner with that document already exists")
 	}
 	return nil
 }
@@ -42,14 +43,21 @@ func (ps *partnerService) HandlerRequest(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	_, err := ps.SavePartners(partnerData)
+	entity, err := ps.SavePartners(partnerData)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		if err.Error() == "a partner with that document already exists" {
+			w.WriteHeader(http.StatusConflict)
+			w.Write([]byte("a partner with that document already exists"))
+			return
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("Internal server error"))
+			return
+		}
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("Partner created successfully"))
+	json.NewEncoder(w).Encode(entity)
 }
 
 func (ps *partnerService) SavePartners(partnerData partnerdto.PartnerData) (*entity.Partner, error) {
@@ -69,7 +77,8 @@ func (ps *partnerService) SavePartners(partnerData partnerdto.PartnerData) (*ent
 	ctx := context.Background()
 	newEntity, err := ps.partnerRepository.SavePartners(ctx, entity)
 	if err != nil {
-		return nil, err
+		logs.LogToFile("logs/error.log", "failed to save partner in database")
+		return nil, fmt.Errorf("failed to save partner")
 	}
 
 	return newEntity, nil
