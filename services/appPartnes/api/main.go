@@ -34,6 +34,8 @@ func main() {
 
 	port := viper.GetString("server.port")
 	router.HandleFunc("/api/v1/partners", partnerService.HandlerRequest).Methods("POST")
+	router.HandleFunc("/api/v1/partners", partnerService.GetPartners).Methods("GET")
+	router.HandleFunc("/api/v1/partners/{id}", partnerService.GetPartners).Methods("GET")
 	fmt.Println("Server is running on port " + port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", port), router))
 }

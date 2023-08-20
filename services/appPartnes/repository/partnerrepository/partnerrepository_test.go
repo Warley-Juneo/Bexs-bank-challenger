@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/wjuneo/bexs/entity"
-	//"github.com/wjuneo/bexs/repository/partnerrepository"
 	"github.com/wjuneo/bexs/repository/partnerrepository/mocks"
 
 	"github.com/bxcodec/faker/v3"
@@ -21,25 +20,25 @@ func TestCreatePartner(t *testing.T) {
 	mockCrlr := gomock.NewController(t)
 	defer mockCrlr.Finish()
 	mockPartnerRepo := mocks.NewMockPartnerRepository(mockCrlr)
-    mockPartnerRepo.EXPECT().SavePartners(context.Background(), fakeDBPartner).Return(&fakeDBPartner, nil)
-	
+	mockPartnerRepo.EXPECT().SavePartners(context.Background(), fakeDBPartner).Return(&fakeDBPartner, nil)
+
 	savedPartner, err := mockPartnerRepo.SavePartners(context.Background(), fakeDBPartner)
-    require.NoError(t, err)
-    require.Equal(t, &fakeDBPartner, savedPartner)
+	require.NoError(t, err)
+	require.Equal(t, &fakeDBPartner, savedPartner)
 }
 
 func TestCreatePartnerError(t *testing.T) {
 	fakeDBPartner := entity.Partner{
-		ID: 123,
+		ID:           123,
 		Trading_name: "Test Trading Name",
-		Document: "123456789",
+		Document:     "123456789",
 	}
 
 	mockCrlr := gomock.NewController(t)
 	defer mockCrlr.Finish()
 	mockPartnerRepo := mocks.NewMockPartnerRepository(mockCrlr)
 	mockPartnerRepo.EXPECT().SavePartners(context.Background(), fakeDBPartner).Return(nil, fmt.Errorf("error"))
-	
+
 	savedPartner, err := mockPartnerRepo.SavePartners(context.Background(), fakeDBPartner)
 	require.Error(t, err)
 	require.Nil(t, savedPartner)
