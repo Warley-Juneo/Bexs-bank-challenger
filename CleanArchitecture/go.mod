@@ -1,9 +1,8 @@
-module githut.com/warley-juneo/bexs-bank-challenger
+module github.com/wjuneo/bexs
 
 go 1.21.0
 
 require (
-	github.com/booscaaa/go-paginate v0.0.11 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/golang-migrate/migrate/v4 v4.16.2 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
