@@ -60,6 +60,12 @@ func (ps *partnerService) HandlerRequest(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	if partnerData.TradingName == "" || partnerData.Document == "" || partnerData.Currency == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Invalid data"))
+		return
+	}
+
 	entity, err := ps.SavePartners(partnerData)
 	if err != nil {
 		if err.Error() == errors.ErrPartnerAlreadyExists {
