@@ -1,7 +1,6 @@
 package entity
 
 import (
-	"errors"
 	"time"
 )
 
@@ -12,15 +11,4 @@ type Partner struct {
 	Currency     string `json:"currency"`
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
-}
-
-func (partner *Partner) Validate() error {
-	list_cucurrency_valid := []string{"USD", "EUR", "GBP"}
-
-	for _, currency := range list_cucurrency_valid {
-		if partner.Currency == currency {
-			return nil
-		}
-	}
-	return errors.New("currency invalid")
 }
