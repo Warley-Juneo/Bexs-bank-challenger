@@ -33,5 +33,4 @@ func TestPaymentsFields(t *testing.T) {
 	require.Equal(t, int32(123), paymentData.Partner_id)
 	require.Equal(t, 123.45, paymentData.Amount)
 	require.Equal(t, consumerData, paymentData.Consumer)
-
 }
