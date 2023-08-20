@@ -50,7 +50,6 @@ func (repo *paymentRepository) SaveConsumer(ctx context.Context, consumer entity
 func (repo *paymentRepository) SavePayment(ctx context.Context, payment entity.Payment) (*entity.Payment, error) {
 
 	savedPayment := entity.Payment{}
-
 	err := repo.db.QueryRow(
 		ctx,
 		"INSERT INTO payment (partner_id, amount, consumer_id) VALUES ($1, $2, $3) returning *",

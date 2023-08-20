@@ -41,9 +41,15 @@ func (ps *paymentService) HandlerRequest(w http.ResponseWriter, r *http.Request)
 
 	payment, err := ps.SavePayments(paymentData)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-		return
+		if err.Error() == "partner not found" {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
 	}
 
 	w.WriteHeader(http.StatusCreated)
@@ -52,13 +58,14 @@ func (ps *paymentService) HandlerRequest(w http.ResponseWriter, r *http.Request)
 
 func (ps *paymentService) SavePayments(paymentData dto.PaymentData) (*dto.PaymentResponse, error) {
 
-	consumer, err := ps.paymentRepository.FindConsumer(context.Background(), paymentData.Consumer.National_id)
+	consumer, _ := ps.paymentRepository.FindConsumer(context.Background(), paymentData.Consumer.National_id)
 	if consumer == nil {
 		entityConsumer := entity.Consumer{
 			Name:        paymentData.Consumer.Name,
 			National_id: paymentData.Consumer.National_id,
 		}
 
+		var err error
 		consumer, err = ps.paymentRepository.SaveConsumer(context.Background(), entityConsumer)
 		if err != nil {
 			return nil, fmt.Errorf(err.Error())
@@ -73,6 +80,9 @@ func (ps *paymentService) SavePayments(paymentData dto.PaymentData) (*dto.Paymen
 
 	newPayment, err := ps.paymentRepository.SavePayment(context.Background(), payment)
 	if err != nil {
+		if err.Error() == "ERROR: insert or update on table \"payment\" violates foreign key constraint \"payment_partner_id_fkey\" (SQLSTATE 23503)" {
+			return nil, fmt.Errorf("partner not found")
+		}
 		return nil, fmt.Errorf(err.Error())
 	}
 
