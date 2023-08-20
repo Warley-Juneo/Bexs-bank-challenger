@@ -9,8 +9,8 @@ type Consumer struct {
 	Name        string `json:"name"`
 	National_id string `json:"national_id"`
 
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	Created_at time.Time
+	Updated_at time.Time
 }
 
 type Payment struct {
@@ -19,6 +19,6 @@ type Payment struct {
 	Amount     float64  `json:"amount"`
 	Consumer   Consumer `json:"consumer"`
 
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	Created_at time.Time
+	Updated_at time.Time
 }

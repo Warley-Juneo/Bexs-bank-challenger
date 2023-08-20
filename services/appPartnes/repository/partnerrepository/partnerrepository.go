@@ -36,6 +36,8 @@ func (repo *partnerRepository) SavePartners(ctx context.Context, partner entity.
 		&savedPartner.Trading_name,
 		&savedPartner.Document,
 		&savedPartner.Currency,
+		&savedPartner.Created_at,
+		&savedPartner.Updated_at,
 	)
 
 	if err != nil {
@@ -46,7 +48,7 @@ func (repo *partnerRepository) SavePartners(ctx context.Context, partner entity.
 }
 
 func (repo *partnerRepository) FindPartnerByDocument(ctx context.Context, document string) (*entity.Partner, error) {
-	var partner entity.Partner
+	partner := entity.Partner{}
 
 	err := repo.db.QueryRow(
 		ctx,
@@ -57,6 +59,8 @@ func (repo *partnerRepository) FindPartnerByDocument(ctx context.Context, docume
 		&partner.Trading_name,
 		&partner.Document,
 		&partner.Currency,
+		&partner.Created_at,
+		&partner.Updated_at,
 	)
 
 	if err != nil {

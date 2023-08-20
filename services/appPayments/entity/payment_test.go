@@ -15,8 +15,8 @@ func TestPaymentsFields(t *testing.T) {
 		Name: "Test Name",
 		National_id: "123456789",
 
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		Created_at: time.Now(),
+		Updated_at: time.Now(),
 	}
 
 
@@ -25,8 +25,8 @@ func TestPaymentsFields(t *testing.T) {
 		Partner_id: 123,
 		Amount: 123.45,
 		Consumer: consumerData,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		Created_at: time.Now(),
+		Updated_at: time.Now(),
 	}
 
 	require.Equal(t, int32(123), paymentData.ID)

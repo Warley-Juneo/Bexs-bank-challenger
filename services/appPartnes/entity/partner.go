@@ -9,6 +9,6 @@ type Partner struct {
 	Trading_name string `json:"trading_name"`
 	Document     string `json:"document"`
 	Currency     string `json:"currency"`
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	Created_at   time.Time
+	Updated_at   time.Time
 }

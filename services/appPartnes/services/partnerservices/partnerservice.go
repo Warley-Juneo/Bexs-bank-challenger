@@ -8,9 +8,9 @@ import (
 
 	"github.com/wjuneo/bexs/dto/partnerdto"
 	"github.com/wjuneo/bexs/entity"
+	"github.com/wjuneo/bexs/errors"
 	"github.com/wjuneo/bexs/logs"
 	"github.com/wjuneo/bexs/repository/partnerrepository"
-	"github.com/wjuneo/bexs/errors"
 )
 
 type PartnerService interface {
@@ -40,6 +40,7 @@ func ValidatedCurrency(currency string) bool {
 }
 
 func (ps *partnerService) ValidatePartners(partnerData partnerdto.PartnerData) error {
+	
 	partner, _ := ps.partnerRepository.FindPartnerByDocument(context.Background(), partnerData.Document)
 	if partner != nil {
 		logs.LogToFile("logs/error.log", errors.ErrPartnerAlreadyExists)
@@ -80,7 +81,7 @@ func (ps *partnerService) HandlerRequest(w http.ResponseWriter, r *http.Request)
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(errors.ErrInternalServerError))
 			return
-		} 
+		}
 	}
 
 	w.WriteHeader(http.StatusCreated)
@@ -90,7 +91,6 @@ func (ps *partnerService) HandlerRequest(w http.ResponseWriter, r *http.Request)
 func (ps *partnerService) SavePartners(partnerData partnerdto.PartnerData) (*entity.Partner, error) {
 
 	err := ps.ValidatePartners(partnerData)
-
 	if err != nil {
 		return nil, err
 	}
