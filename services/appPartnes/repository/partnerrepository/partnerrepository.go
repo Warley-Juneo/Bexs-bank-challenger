@@ -3,12 +3,13 @@ package partnerrepository
 import (
 	"context"
 
-	"github.com/wjuneo/bexs/postgres"
 	"github.com/wjuneo/bexs/entity"
+	"github.com/wjuneo/bexs/postgres"
 )
 
 type PartnerRepository interface {
 	SavePartners(ctx context.Context, partner entity.Partner) (*entity.Partner, error)
+	FindPartnerByDocument(ctx context.Context, document string) (*entity.Partner, error)
 }
 
 type partnerRepository struct {
@@ -42,4 +43,24 @@ func (repo *partnerRepository) SavePartners(ctx context.Context, partner entity.
 	}
 
 	return &savedPartner, nil
+}
+
+func (repo *partnerRepository) FindPartnerByDocument(ctx context.Context, document string) (*entity.Partner, error) {
+	var partner entity.Partner
+
+	err := repo.db.QueryRow(
+		ctx,
+		"SELECT * FROM partner WHERE document = $1",
+		document,
+	).Scan(
+		&partner.ID,
+		&partner.Trading_name,
+		&partner.Document,
+		&partner.Currency,
+	)
+
+	if err != nil {
+		return nil, nil
+	}
+	return &partner, nil
 }

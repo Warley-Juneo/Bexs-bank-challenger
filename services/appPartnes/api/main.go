@@ -33,7 +33,7 @@ func main() {
 	partnerService := partnerservices.NewPartnerService(partnerRepository)
 
 	port := viper.GetString("server.port")
-	router.HandleFunc("/api/v1/partners", partnerService.SavePartners).Methods("POST")
+	router.HandleFunc("/api/v1/partners", partnerService.HandlerRequest).Methods("POST")
 	fmt.Println("Server is running on port " + port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", port), router))
 }
