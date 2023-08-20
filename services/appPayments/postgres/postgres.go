@@ -3,10 +3,9 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 
-	"github.com/golang-migrate/migrate/v4"
+	//"github.com/golang-migrate/migrate/v4"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -47,17 +46,4 @@ func GetConnection(context context.Context) *pgxpool.Pool {
 	}
 
 	return conn
-}
-
-// RunMigrations run scripts on path database/migrations
-func RunMigrations() {
-	databaseURL := viper.GetString("database.url")
-	m, err := migrate.New("file://database/migrations", "pgx"+databaseURL)
-	if err != nil {
-		log.Println(err)
-	}
-
-	if err:= m.Up(); err != nil {
-		log.Println(err)
-	}
 }

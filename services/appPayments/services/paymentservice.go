@@ -13,7 +13,7 @@ import (
 
 type PaymentService interface {
 	HandlerRequest(w http.ResponseWriter, r *http.Request)
-	SavePayments(paymentData dto.PaymentData) (*entity.Payment, error)
+	SavePayments(paymentData dto.PaymentData) (*dto.PaymentResponse, error)
 }
 
 type paymentService struct {
@@ -26,10 +26,9 @@ func NewPaymentService(paymentRepository repository.PaymentRepository) PaymentSe
 	}
 }
 
-
 func (ps *paymentService) HandlerRequest(w http.ResponseWriter, r *http.Request) {
 	var paymentData dto.PaymentData
-	
+
 	if err := json.NewDecoder(r.Body).Decode(&paymentData); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -44,21 +43,32 @@ func (ps *paymentService) HandlerRequest(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
+		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(payment)
 }
 
-func (ps *paymentService) SavePayments(paymentData dto.PaymentData) (*entity.Payment, error) {
-	
-	payment := entity.Payment{
-		Partner_id: paymentData.Partner_id,
-		Amount:     paymentData.Amount,
-		Consumer: entity.Consumer{
+func (ps *paymentService) SavePayments(paymentData dto.PaymentData) (*dto.PaymentResponse, error) {
+
+	consumer, err := ps.paymentRepository.FindConsumer(context.Background(), paymentData.Consumer.National_id)
+	if consumer == nil {
+		entityConsumer := entity.Consumer{
 			Name:        paymentData.Consumer.Name,
 			National_id: paymentData.Consumer.National_id,
-		},
+		}
+
+		consumer, err = ps.paymentRepository.SaveConsumer(context.Background(), entityConsumer)
+		if err != nil {
+			return nil, fmt.Errorf(err.Error())
+		}
+	}
+
+	payment := entity.Payment{
+		Partner_id:  paymentData.Partner_id,
+		Amount:      paymentData.Amount,
+		Consumer_id: consumer.ID,
 	}
 
 	newPayment, err := ps.paymentRepository.SavePayment(context.Background(), payment)
@@ -66,5 +76,19 @@ func (ps *paymentService) SavePayments(paymentData dto.PaymentData) (*entity.Pay
 		return nil, fmt.Errorf(err.Error())
 	}
 
-	return newPayment, nil
+	dtoPaymentResponse := dto.PaymentResponse{
+		ID:         newPayment.ID,
+		Partner_id: newPayment.Partner_id,
+		Amount:     newPayment.Amount,
+		Consumer: dto.ConsumerData{
+			ID:          consumer.ID,
+			Name:        consumer.Name,
+			National_id: consumer.National_id,
+		},
+
+		Created_at: newPayment.Created_at.Format("2006-01-02 15:04:05"),
+		Updated_at: newPayment.Updated_at.Format("2006-01-02 15:04:05"),
+	}
+
+	return &dtoPaymentResponse, nil
 }

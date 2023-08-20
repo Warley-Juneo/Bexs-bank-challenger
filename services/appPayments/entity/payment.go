@@ -14,10 +14,10 @@ type Consumer struct {
 }
 
 type Payment struct {
-	ID         int32    `json:"id"`
-	Partner_id int32    `json:"partner_id"`
-	Amount     float64  `json:"amount"`
-	Consumer   Consumer `json:"consumer"`
+	ID          int32   `json:"id"`
+	Partner_id  int32   `json:"partner_id"`
+	Amount      float64 `json:"amount"`
+	Consumer_id int32   `json:"consumer_id"`
 
 	Created_at time.Time
 	Updated_at time.Time
