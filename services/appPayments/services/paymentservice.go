@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/payment/consts"
 	"github.com/payment/dto"
 	"github.com/payment/entity"
 	"github.com/payment/repository"
@@ -40,6 +41,10 @@ func (ps *paymentService) HandlerRequest(w http.ResponseWriter, r *http.Request)
 	}
 
 	paymentData.Amount = float64(int(paymentData.Amount*100)) / 100
+	if len(paymentData.Consumer.National_id) != 11 {
+		http.Error(w, "Invalid National Id", http.StatusBadRequest)
+		return
+	}
 
 	payment, err := ps.SavePayments(paymentData)
 	if err != nil {
@@ -56,6 +61,32 @@ func (ps *paymentService) HandlerRequest(w http.ResponseWriter, r *http.Request)
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(payment)
+}
+
+func (ps *paymentService) CalculateForeingAmount(partner_id int32, amount float64) float64 {
+	url := fmt.Sprintf("http://localhost:3001/api/v1/partners/%d", partner_id)
+
+	r, err := http.Get(url)
+	if err != nil {
+		return 0
+	}
+	defer r.Body.Close()
+
+	partner := dto.PartnerData{}
+	err = json.NewDecoder(r.Body).Decode(&partner)
+	if err != nil {
+		return 0
+	}
+
+	if partner.Currency == "USD" {
+		return amount * consts.USD
+	} else if partner.Currency == "EUR" {
+		return amount * consts.EUR
+	} else if partner.Currency == "GBP" {
+		return amount * consts.GBP
+	} else {
+		return 0
+	}
 }
 
 func (ps *paymentService) SavePayments(paymentData dto.PaymentData) (*dto.PaymentResponse, error) {
@@ -88,10 +119,12 @@ func (ps *paymentService) SavePayments(paymentData dto.PaymentData) (*dto.Paymen
 		return nil, fmt.Errorf(err.Error())
 	}
 
+	foreingAmount := ps.CalculateForeingAmount(paymentData.Partner_id, paymentData.Amount)
 	dtoPaymentResponse := dto.PaymentResponse{
-		ID:         newPayment.ID,
-		Partner_id: newPayment.Partner_id,
-		Amount:     newPayment.Amount,
+		ID:             newPayment.ID,
+		Partner_id:     newPayment.Partner_id,
+		Amount:         newPayment.Amount,
+		Foreing_amount: foreingAmount,
 		Consumer: dto.ConsumerData{
 			ID:          consumer.ID,
 			Name:        consumer.Name,
