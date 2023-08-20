@@ -10,8 +10,10 @@ import (
 type PaymentRepository interface {
 	SavePayment(ctx context.Context, payment entity.Payment) (*entity.Payment, error)
 	SaveConsumer(ctx context.Context, consumer entity.Consumer) (*entity.Consumer, error)
-	FindConsumer(ctx context.Context, national_id string) (*entity.Consumer, error)
-	FindPayment(ctx context.Context, payment_id int32) (*entity.Payment, error)
+	FindConsumerByNationalId(ctx context.Context, national_id string) (*entity.Consumer, error)
+	FindConsumerById(ctx context.Context, consumer_id int32) (*entity.Consumer, error)
+	FindPaymentById(ctx context.Context, payment_id string) (*entity.Payment, error)
+	GetPayments(ctx context.Context, offset int, limit int) ([]entity.Payment, error)
 }
 
 type paymentRepository struct {
@@ -72,7 +74,32 @@ func (repo *paymentRepository) SavePayment(ctx context.Context, payment entity.P
 	return &savedPayment, nil
 }
 
-func (repo *paymentRepository) FindConsumer(ctx context.Context, national_id string) (*entity.Consumer, error) {
+func (repo *paymentRepository) FindConsumerById(ctx context.Context, consumer_id int32) (*entity.Consumer, error) {
+	consumer := entity.Consumer{}
+
+	err := repo.db.QueryRow(
+		ctx,
+		"SELECT * FROM consumer WHERE id = $1",
+		consumer_id,
+	).Scan(
+		&consumer.ID,
+		&consumer.Name,
+		&consumer.National_id,
+		&consumer.Created_at,
+		&consumer.Updated_at,
+	)
+
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &consumer, nil
+}
+
+func (repo *paymentRepository) FindConsumerByNationalId(ctx context.Context, national_id string) (*entity.Consumer, error) {
 	consumer := entity.Consumer{}
 
 	err := repo.db.QueryRow(
@@ -97,7 +124,7 @@ func (repo *paymentRepository) FindConsumer(ctx context.Context, national_id str
 	return &consumer, nil
 }
 
-func (repo *paymentRepository) FindPayment(ctx context.Context, payment_id int32) (*entity.Payment, error) {
+func (repo *paymentRepository) FindPaymentById(ctx context.Context, payment_id string) (*entity.Payment, error) {
 	payment := entity.Payment{}
 
 	err := repo.db.QueryRow(
@@ -118,4 +145,35 @@ func (repo *paymentRepository) FindPayment(ctx context.Context, payment_id int32
 	}
 
 	return &payment, nil
+}
+
+func (repo *paymentRepository) GetPayments(ctx context.Context, offset int, limit int) ([]entity.Payment, error) {
+	rows, err := repo.db.Query(ctx, "SELECT * FROM payment OFFSET $1 LIMIT $2", offset, limit)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    var payments []entity.Payment
+    for rows.Next() {
+        var payment entity.Payment
+        err := rows.Scan(
+            &payment.ID,
+            &payment.Partner_id,
+            &payment.Amount,
+            &payment.Consumer_id,
+            &payment.Created_at,
+            &payment.Updated_at,
+        )
+        if err != nil {
+            return nil, err
+        }
+        payments = append(payments, payment)
+    }
+
+    if err := rows.Err(); err != nil {
+        return nil, err
+    }
+
+    return payments, nil
 }

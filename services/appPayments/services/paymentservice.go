@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
+
+	"github.com/gorilla/mux"
 
 	"github.com/payment/consts"
 	"github.com/payment/dto"
@@ -15,6 +18,8 @@ import (
 type PaymentService interface {
 	HandlerRequest(w http.ResponseWriter, r *http.Request)
 	SavePayments(paymentData dto.PaymentData) (*dto.PaymentResponse, error)
+	HandlerGetPaymentId(w http.ResponseWriter, r *http.Request)
+	HandlerGetPayment(w http.ResponseWriter, r *http.Request)
 }
 
 type paymentService struct {
@@ -91,7 +96,7 @@ func (ps *paymentService) CalculateForeingAmount(partner_id int32, amount float6
 
 func (ps *paymentService) SavePayments(paymentData dto.PaymentData) (*dto.PaymentResponse, error) {
 
-	consumer, _ := ps.paymentRepository.FindConsumer(context.Background(), paymentData.Consumer.National_id)
+	consumer, _ := ps.paymentRepository.FindConsumerByNationalId(context.Background(), paymentData.Consumer.National_id)
 	if consumer == nil {
 		entityConsumer := entity.Consumer{
 			Name:        paymentData.Consumer.Name,
@@ -136,4 +141,104 @@ func (ps *paymentService) SavePayments(paymentData dto.PaymentData) (*dto.Paymen
 	}
 
 	return &dtoPaymentResponse, nil
+}
+
+func (ps *paymentService) HandlerGetPaymentId(w http.ResponseWriter, r *http.Request) {
+
+	paymentID := mux.Vars(r)["id"]
+
+	if paymentID != "" {
+		entityPayment, err := ps.paymentRepository.FindPaymentById(context.Background(), paymentID)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("Internal Server Error"))
+			return
+		}
+		consumer, err := ps.paymentRepository.FindConsumerById(context.Background(), entityPayment.Consumer_id)
+		if *consumer == (entity.Consumer{}) {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte("Consumer not found"))
+			return
+		}
+
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("Internal Server Error"))
+			return
+		}
+
+		foreingAmount := ps.CalculateForeingAmount(entityPayment.Partner_id, entityPayment.Amount)
+		w.WriteHeader(http.StatusOK)
+		dtoPaymentResponse := dto.PaymentResponse{
+			ID:             entityPayment.ID,
+			Partner_id:     entityPayment.Partner_id,
+			Amount:         entityPayment.Amount,
+			Foreing_amount: foreingAmount,
+			Consumer: dto.ConsumerData{
+				ID:          consumer.ID,
+				Name:        consumer.Name,
+				National_id: consumer.National_id,
+			},
+
+			Created_at: entityPayment.Created_at.Format("2006-01-02 15:04:05"),
+			Updated_at: entityPayment.Updated_at.Format("2006-01-02 15:04:05"),
+		}
+
+		json.NewEncoder(w).Encode(dtoPaymentResponse)
+		return
+	}
+
+	w.WriteHeader(http.StatusBadRequest)
+	w.Write([]byte("Bad Request"))
+}
+
+func (ps *paymentService) HandlerGetPayment(w http.ResponseWriter, r *http.Request) {
+	offsetStr := r.URL.Query().Get("offset")
+    limitStr := r.URL.Query().Get("limit")
+
+    offset, err := strconv.Atoi(offsetStr)
+    if err != nil {
+        w.WriteHeader(http.StatusBadRequest)
+        w.Write([]byte("Invalid offset parameter"))
+        return
+    }
+    limit, err := strconv.Atoi(limitStr)
+    if err != nil {
+        w.WriteHeader(http.StatusBadRequest)
+        w.Write([]byte("Invalid limit parameter"))
+        return
+    }
+
+	payments, err := ps.paymentRepository.GetPayments(context.Background(), offset, limit)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Internal Server Error"))
+	}
+
+	var paymentResponses []dto.PaymentResponse
+
+	for _, payment := range payments {
+		consumer, err := ps.paymentRepository.FindConsumerById(context.Background(), payment.Consumer_id)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("Internal Server Error"))
+			return
+		}
+
+		paymentResponse := dto.PaymentResponse{
+			ID:         payment.ID,
+			Partner_id: payment.Partner_id,
+			Amount:     payment.Amount,
+			Consumer: dto.ConsumerData{
+				ID:          consumer.ID,
+				Name:        consumer.Name,
+				National_id: consumer.National_id,
+			},
+			Created_at: payment.Created_at.Format("2006-01-02 15:04:05"),
+			Updated_at: payment.Updated_at.Format("2006-01-02 15:04:05"),
+		}
+		paymentResponses = append(paymentResponses, paymentResponse)
+	}
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(paymentResponses)
 }

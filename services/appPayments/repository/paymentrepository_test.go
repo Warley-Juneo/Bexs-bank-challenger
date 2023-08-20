@@ -32,11 +32,7 @@ func TestCreatePaymentError(t *testing.T) {
 		ID: 123,
 		Partner_id: 123,
 		Amount: 123.45,
-		Consumer: entity.Consumer{
-			ID: 123,
-			Name: "Test Name",
-			National_id: "123456789",
-		},
+		Consumer_id: 123,
 	}
 
 	mockCrlr := gomock.NewController(t)
