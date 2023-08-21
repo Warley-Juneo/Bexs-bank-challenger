@@ -8,7 +8,7 @@ Neste desafio do banco bexs, você irá encontrar uma REST API para criação de
 
 ## :hammer: Ferramentas necessarias para rodar o projeto:
 - 1: <a href="https://go.dev/">Golang</a>
-- 2: <a href="#">POSTGRESQL</a>
+- 2: <a href="https://stackoverflow.com/questions/53267642/create-new-local-server-in-pgadmin">POSTGRESQL</a>
 
 ## 📁 Acesso ao projeto
 - `Passo 1:` Clone o projeto na sua máquina.
