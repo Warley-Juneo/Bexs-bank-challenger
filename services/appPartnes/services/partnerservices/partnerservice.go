@@ -13,6 +13,7 @@ import (
 	"github.com/wjuneo/bexs/entity"
 	"github.com/wjuneo/bexs/errors"
 	"github.com/wjuneo/bexs/repository/partnerrepository"
+	"github.com/wjuneo/bexs/services/partnerservices/utils"
 )
 
 type PartnerService interface {
@@ -31,17 +32,6 @@ func NewPartnerService(partnerRepository partnerrepository.PartnerRepository) Pa
 	}
 }
 
-func ValidatedCurrency(currency string) bool {
-	allowedCurrencies := []string{"GBP", "EUR", "USD"}
-
-	for _, allowedCurrency := range allowedCurrencies {
-		if allowedCurrency == currency {
-			return true
-		}
-	}
-	return false
-}
-
 func (ps *partnerService) ValidatePartners(partnerData partnerdto.PartnerData) error {
 
 	partner, _ := ps.partnerRepository.FindPartnerByDocument(context.Background(), partnerData.Document)
@@ -49,7 +39,7 @@ func (ps *partnerService) ValidatePartners(partnerData partnerdto.PartnerData) e
 		return fmt.Errorf(errors.ErrPartnerAlreadyExists)
 	}
 
-	if !ValidatedCurrency(partnerData.Currency) {
+	if !utils.ValidatedCurrency(partnerData.Currency) {
 		return fmt.Errorf(errors.ErrCurrencyNotAllowed)
 	}
 	return nil
@@ -148,5 +138,4 @@ func (ps *partnerService) GetPartners(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(partners)
-	return
 }

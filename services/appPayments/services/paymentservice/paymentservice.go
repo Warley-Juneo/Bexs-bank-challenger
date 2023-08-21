@@ -11,9 +11,10 @@ import (
 
 	"github.com/payment/logs"
 	"github.com/payment/consts"
-	"github.com/payment/dto"
-	"github.com/payment/entity"
-	"github.com/payment/repository"
+	"github.com/payment/dto/paymentdto"
+	"github.com/payment/entity/paymententity"
+	"github.com/payment/repository/paymentrepository"
+	"github.com/payment/services/paymentservice/utils"
 )
 
 type PaymentService interface {
@@ -74,7 +75,7 @@ func (ps *paymentService) HandlerRequest(w http.ResponseWriter, r *http.Request)
 	json.NewEncoder(w).Encode(payment)
 }
 
-func (ps *paymentService) CalculateForeingAmount(partner_id int32, amount float64) float64 {
+func CalculateForeingAmount(partner_id int32, amount float64) float64 {
 	url := fmt.Sprintf("http://localhost:3001/api/v1/partners/%d", partner_id)
 
 	r, err := http.Get(url)
@@ -130,7 +131,7 @@ func (ps *paymentService) SavePayments(paymentData dto.PaymentData) (*dto.Paymen
 		return nil, fmt.Errorf(err.Error())
 	}
 
-	foreingAmount := ps.CalculateForeingAmount(paymentData.Partner_id, paymentData.Amount)
+	foreingAmount := utils.CalculateForeingAmount(paymentData.Partner_id, paymentData.Amount)
 	dtoPaymentResponse := dto.PaymentResponse{
 		ID:             newPayment.ID,
 		Partner_id:     newPayment.Partner_id,
@@ -176,7 +177,7 @@ func (ps *paymentService) HandlerGetPaymentId(w http.ResponseWriter, r *http.Req
 			return
 		}
 
-		foreingAmount := ps.CalculateForeingAmount(entityPayment.Partner_id, entityPayment.Amount)
+		foreingAmount := utils.CalculateForeingAmount(entityPayment.Partner_id, entityPayment.Amount)
 		w.WriteHeader(http.StatusOK)
 		dtoPaymentResponse := dto.PaymentResponse{
 			ID:             entityPayment.ID,
