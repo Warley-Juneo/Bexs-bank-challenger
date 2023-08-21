@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/wjuneo/bexs/entity"
-	//"github.com/go-faker/faker/v4"
 
 	"github.com/stretchr/testify/require"
 )
@@ -16,8 +15,8 @@ func TestPartnerFields(t *testing.T) {
 		Trading_name: 	"Test Trading Name",
 		Document: 		"123456789",
 		Currency: 		"USD",
-		CreatedAt: 		time.Now(),
-		UpdatedAt: 		time.Now(),
+		Created_at: 		time.Now(),
+		Updated_at: 		time.Now(),
 	}
 
 	require.Equal(t, int32(123), partnerData.ID)

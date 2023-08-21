@@ -6,16 +6,19 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gorilla/mux"
+
 	"github.com/wjuneo/bexs/dto/partnerdto"
 	"github.com/wjuneo/bexs/entity"
+	"github.com/wjuneo/bexs/errors"
 	"github.com/wjuneo/bexs/logs"
 	"github.com/wjuneo/bexs/repository/partnerrepository"
-	"github.com/wjuneo/bexs/errors"
 )
 
 type PartnerService interface {
 	HandlerRequest(w http.ResponseWriter, r *http.Request)
 	SavePartners(partnerData partnerdto.PartnerData) (*entity.Partner, error)
+	GetPartners(w http.ResponseWriter, r *http.Request)
 }
 
 type partnerService struct {
@@ -40,6 +43,7 @@ func ValidatedCurrency(currency string) bool {
 }
 
 func (ps *partnerService) ValidatePartners(partnerData partnerdto.PartnerData) error {
+
 	partner, _ := ps.partnerRepository.FindPartnerByDocument(context.Background(), partnerData.Document)
 	if partner != nil {
 		logs.LogToFile("logs/error.log", errors.ErrPartnerAlreadyExists)
@@ -80,7 +84,7 @@ func (ps *partnerService) HandlerRequest(w http.ResponseWriter, r *http.Request)
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(errors.ErrInternalServerError))
 			return
-		} 
+		}
 	}
 
 	w.WriteHeader(http.StatusCreated)
@@ -90,7 +94,6 @@ func (ps *partnerService) HandlerRequest(w http.ResponseWriter, r *http.Request)
 func (ps *partnerService) SavePartners(partnerData partnerdto.PartnerData) (*entity.Partner, error) {
 
 	err := ps.ValidatePartners(partnerData)
-
 	if err != nil {
 		return nil, err
 	}
@@ -101,12 +104,44 @@ func (ps *partnerService) SavePartners(partnerData partnerdto.PartnerData) (*ent
 		Currency:     partnerData.Currency,
 	}
 
-	ctx := context.Background()
-	newEntity, err := ps.partnerRepository.SavePartners(ctx, entity)
+	newEntity, err := ps.partnerRepository.SavePartners(context.Background(), entity)
 	if err != nil {
 		logs.LogToFile("logs/error.log", errors.ErrInternalServerError)
 		return nil, fmt.Errorf(errors.ErrInternalServerError)
 	}
 
 	return newEntity, nil
+}
+
+func (ps *partnerService) GetPartners(w http.ResponseWriter, r *http.Request) {
+	partnerID := mux.Vars(r)["id"]
+	if partnerID != "" {
+		partner, err := ps.partnerRepository.FindPartnerByID(context.Background(), partnerID)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(errors.ErrInternalServerError))
+			return
+		}
+
+		if partner == nil {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte(errors.ErrPartnerNotFound))
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(partner)
+		return
+	}
+
+	partners, err := ps.partnerRepository.GetPartners(context.Background())
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(errors.ErrInternalServerError))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(partners)
+	return
 }
