@@ -8,11 +8,12 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/wjuneo/bexs/logs"
 	"github.com/wjuneo/bexs/dto/partnerdto"
 	"github.com/wjuneo/bexs/entity"
 	"github.com/wjuneo/bexs/errors"
-	"github.com/wjuneo/bexs/logs"
 	"github.com/wjuneo/bexs/repository/partnerrepository"
+	"github.com/wjuneo/bexs/services/partnerservices/utils"
 )
 
 type PartnerService interface {
@@ -31,27 +32,14 @@ func NewPartnerService(partnerRepository partnerrepository.PartnerRepository) Pa
 	}
 }
 
-func ValidatedCurrency(currency string) bool {
-	allowedCurrencies := []string{"GBP", "EUR", "USD"}
-
-	for _, allowedCurrency := range allowedCurrencies {
-		if allowedCurrency == currency {
-			return true
-		}
-	}
-	return false
-}
-
 func (ps *partnerService) ValidatePartners(partnerData partnerdto.PartnerData) error {
 
 	partner, _ := ps.partnerRepository.FindPartnerByDocument(context.Background(), partnerData.Document)
 	if partner != nil {
-		logs.LogToFile("logs/error.log", errors.ErrPartnerAlreadyExists)
 		return fmt.Errorf(errors.ErrPartnerAlreadyExists)
 	}
 
-	if !ValidatedCurrency(partnerData.Currency) {
-		logs.LogToFile("logs/error.log", errors.ErrCurrencyNotAllowed)
+	if !utils.ValidatedCurrency(partnerData.Currency) {
 		return fmt.Errorf(errors.ErrCurrencyNotAllowed)
 	}
 	return nil
@@ -61,6 +49,7 @@ func (ps *partnerService) HandlerRequest(w http.ResponseWriter, r *http.Request)
 	var partnerData partnerdto.PartnerData
 	if err := json.NewDecoder(r.Body).Decode(&partnerData); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		logs.LogToFile("logs/error.log", err.Error())
 		return
 	}
 
@@ -75,14 +64,17 @@ func (ps *partnerService) HandlerRequest(w http.ResponseWriter, r *http.Request)
 		if err.Error() == errors.ErrPartnerAlreadyExists {
 			w.WriteHeader(http.StatusConflict)
 			w.Write([]byte(errors.ErrPartnerAlreadyExists))
+			logs.LogToFile("logs/error.log", errors.ErrPartnerAlreadyExists)
 			return
 		} else if err.Error() == errors.ErrCurrencyNotAllowed {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(errors.ErrCurrencyNotAllowed))
+			logs.LogToFile("logs/error.log", errors.ErrCurrencyNotAllowed)
 			return
 		} else {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(errors.ErrInternalServerError))
+			logs.LogToFile("logs/error.log", errors.ErrInternalServerError)
 			return
 		}
 	}
@@ -120,12 +112,14 @@ func (ps *partnerService) GetPartners(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(errors.ErrInternalServerError))
+			logs.LogToFile("logs/error.log", errors.ErrInternalServerError)
 			return
 		}
 
 		if partner == nil {
 			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte(errors.ErrPartnerNotFound))
+			logs.LogToFile("logs/error.log", errors.ErrPartnerNotFound)
 			return
 		}
 
@@ -138,10 +132,10 @@ func (ps *partnerService) GetPartners(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(errors.ErrInternalServerError))
+		logs.LogToFile("logs/error.log", errors.ErrInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(partners)
-	return
 }

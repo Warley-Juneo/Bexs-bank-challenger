@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/payment/postgres"
-	"github.com/payment/repository"
-	"github.com/payment/services"
+	"github.com/payment/repository/paymentrepository"
+	"github.com/payment/services/paymentservice"
 
 	"context"
 	"fmt"

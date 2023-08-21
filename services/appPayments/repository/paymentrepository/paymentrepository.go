@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	"github.com/payment/entity"
+	"github.com/payment/entity/paymententity"
 	"github.com/payment/postgres"
 )
 
