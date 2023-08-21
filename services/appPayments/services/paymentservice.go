@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/payment/logs"
 	"github.com/payment/consts"
 	"github.com/payment/dto"
 	"github.com/payment/entity"
@@ -37,17 +38,20 @@ func (ps *paymentService) HandlerRequest(w http.ResponseWriter, r *http.Request)
 
 	if err := json.NewDecoder(r.Body).Decode(&paymentData); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		logs.LogToFile("logs/error.log", err.Error())
 		return
 	}
 
 	if paymentData.Amount <= 0 || paymentData.Partner_id <= 0 || paymentData.Consumer.Name == "" || paymentData.Consumer.National_id == "" {
 		http.Error(w, "Invalid data", http.StatusBadRequest)
+		logs.LogToFile("logs/error.log", "Invalid data")
 		return
 	}
 
 	paymentData.Amount = float64(int(paymentData.Amount*100)) / 100
 	if len(paymentData.Consumer.National_id) != 11 {
 		http.Error(w, "Invalid National Id", http.StatusBadRequest)
+		logs.LogToFile("logs/error.log", "Invalid National Id")
 		return
 	}
 
@@ -56,10 +60,12 @@ func (ps *paymentService) HandlerRequest(w http.ResponseWriter, r *http.Request)
 		if err.Error() == "partner not found" {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
+			logs.LogToFile("logs/error.log", err.Error())
 			return
 		} else {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
+			logs.LogToFile("logs/error.log", err.Error())
 			return
 		}
 	}
@@ -152,18 +158,21 @@ func (ps *paymentService) HandlerGetPaymentId(w http.ResponseWriter, r *http.Req
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte("Internal Server Error"))
+			logs.LogToFile("logs/error.log", err.Error())
 			return
 		}
 		consumer, err := ps.paymentRepository.FindConsumerById(context.Background(), entityPayment.Consumer_id)
 		if *consumer == (entity.Consumer{}) {
 			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte("Consumer not found"))
+			logs.LogToFile("logs/error.log", "Consumer not found")
 			return
 		}
 
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte("Internal Server Error"))
+			logs.LogToFile("logs/error.log", err.Error())
 			return
 		}
 
@@ -200,12 +209,14 @@ func (ps *paymentService) HandlerGetPayment(w http.ResponseWriter, r *http.Reque
     if err != nil {
         w.WriteHeader(http.StatusBadRequest)
         w.Write([]byte("Invalid offset parameter"))
+		logs.LogToFile("logs/error.log", err.Error())
         return
     }
     limit, err := strconv.Atoi(limitStr)
     if err != nil {
         w.WriteHeader(http.StatusBadRequest)
         w.Write([]byte("Invalid limit parameter"))
+		logs.LogToFile("logs/error.log", err.Error())
         return
     }
 
@@ -213,6 +224,7 @@ func (ps *paymentService) HandlerGetPayment(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Internal Server Error"))
+		logs.LogToFile("logs/error.log", err.Error())
 	}
 
 	var paymentResponses []dto.PaymentResponse
@@ -222,6 +234,7 @@ func (ps *paymentService) HandlerGetPayment(w http.ResponseWriter, r *http.Reque
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte("Internal Server Error"))
+			logs.LogToFile("logs/error.log", err.Error())
 			return
 		}
 
